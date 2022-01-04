@@ -1,11 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:image/image.dart' as imglib;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_share/image_share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share/share.dart';
 class ImageCropingExample extends StatefulWidget {
