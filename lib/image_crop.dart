@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:image/image.dart' as imglib;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_share/image_share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share/share.dart';
 class ImageCropingExample extends StatefulWidget {
@@ -16,7 +17,7 @@ class ImageCropingExample extends StatefulWidget {
   _ImageCropingExampleState createState() => _ImageCropingExampleState();
 }
 
-enum AppState { free, picked, cropped, split }
+enum AppState { free, picked,croping, cropped, split }
 
 class _ImageCropingExampleState extends State<ImageCropingExample> {
   AppState state;
@@ -35,18 +36,21 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Center(
+            state==AppState.croping?Container():Center(
               child: state == AppState.cropped
                   ? SizedBox(
                       height: MediaQuery.of(context).size.height,
                       child: imageFile != null
-                          ? GridView.count(
-                              // childAspectRatio:
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 1.5,
-                              mainAxisSpacing: 1.5,
-                              children: splitImage(imageFile.readAsBytesSync()),
-                            )
+                          ? Container(
+                        padding: EdgeInsets.all(10),
+                            child: GridView.count(
+                                // childAspectRatio:
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 1.5,
+                                mainAxisSpacing: 1.5,
+                                children: splitImage(imageFile.readAsBytesSync()),
+                              ),
+                          )
                           : Container(),
                     )
                   : Center(
@@ -55,7 +59,6 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                           : Container(),
                     ),
             ),
-            check != null ? Image.file(check) : Text('not lodea'),
           ],
         ),
       ),
@@ -67,6 +70,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
           else if (state == AppState.picked)
             _cropImage();
           else if (state == AppState.cropped)
+
             splitImage(imageFile.readAsBytesSync());
           else if (state == AppState.split) _clearImage();
         },
@@ -115,50 +119,25 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     return output;
   }
 
-  var filepath;
-  var check;
+  File filepath;
 ///Saving file locally
   Future<void> savingFile(imglib.Image img) async {
-    var imagePath = img.data;
-    var uInt32List = Uint32List.fromList(imagePath);
-    var uint8List = uInt32List.buffer.asUint8List();
-    final external = (await getExternalStorageDirectory()).path + '/insta_img_1.jpg';
-    final file = File(external);
-    filepath = await file.writeAsBytes(uint8List);
-    setState(() {
-      check = file;
-    });
+    var imagePath = imglib.encodeJpg(img);
+    final external = (await getExternalStorageDirectory()).path + '/insta.png';
+    try {
+      final file = File(external);
+      filepath = await file.writeAsBytes(imagePath);
+    } catch(error) {
+      print('///// ERROR: $error');
+    }
   }
 
   ///Converting image to file
-  Future<List<String>> imgFile() async {
-    // var imagePath = img.data;
-    // var uInt32List = Uint32List.fromList(imagePath);
-    // var uint8List = uInt32List.buffer.asUint8List();
-    // print(uint8List);
-    //
-    // final external= (await getExternalStorageDirectory()).path + '/insta_img_1.jpg';
-    // final file=File(external);
-    // var filepath=await file.writeAsBytes(uint8List);
-
-    // File imageToFilPath = File.fromRawPath(uint8List);
-    // var path= imageToFilPath.path;
-    // print(path);
-
-    // List<String> list=[path];
-    // list.add(path);
-    // list.forEach((element) {
-    //   element.split(path);
-    // });
-    List<String> list = [filepath.path];
-
-    return list;
-  }
 
   ///Share image
   Future<void> shareImage() async {
     final RenderBox box = context.findRenderObject();
-    Share.shareFiles(await imgFile(),
+    Share.shareFiles([filepath.path],
         subject: "this is subject",
         sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
   }
