@@ -35,52 +35,66 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            state == AppState.croping
-                ? Container()
-                : Center(
-                    child: state == AppState.cropped
-                        ? SizedBox(
-                            height: MediaQuery.of(context).size.height,
-                            child: imageFile != null
-                                ? Container(
-                                    padding: EdgeInsets.all(10),
-                                    child: GridView.count(
-                                      // childAspectRatio:
-                                      crossAxisCount: 3,
-                                      crossAxisSpacing: 1.5,
-                                      mainAxisSpacing: 1.5,
-                                      children: splitImage(
-                                          imageFile.readAsBytesSync()),
-                                    ),
-                                  )
-                                : Container(),
-                          )
-                        : Center(
-                            child: imageFile != null
-                                ? Image.file(imageFile)
-                                : Container(),
-                          ),
+      body: Center(
+          child: imageFile != null
+              ? Container(
+                  height: MediaQuery.of(context).size.height / 1.8,
+                  padding: EdgeInsets.all(10),
+                  child: GridView.count(
+                    // childAspectRatio:
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 1.5,
+                    mainAxisSpacing: 1.5,
+                    children: splitImage(imageFile.readAsBytesSync()),
                   ),
-          ],
-        ),
-      ),
+                )
+              : Container(
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  padding: EdgeInsets.all(10),
+                  color: Colors.grey.shade400,
+                  child: Center(child: Text("Add Image by Clicking Add Icon ")),
+                )),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepOrange,
         onPressed: () {
-          if (state == AppState.free) {
+          if (state == AppState.free)
             reqCameraPermision();
-            _pickImage();
-          } else if (state == AppState.picked)
-            _cropImage();
-          else if (state == AppState.cropped)
-            splitImage(imageFile.readAsBytesSync());
-          else if (state == AppState.split) _clearImage();
+          else if (state == AppState.cropped) _clearImage();
         },
         child: _buildButtonIcon(),
       ),
+    );
+  }
+
+  Future<dynamic> imageOption(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Wrap(
+            children: [
+              ListTile(
+                title: Text("Browse from Gallery"),
+                trailing: Icon(Icons.photo_album),
+                onTap: () {
+                  _pickGalleryImage();
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text("Take a Picture"),
+                trailing: Icon(Icons.photo_camera),
+                onTap: () {
+                  _pickCameraImage();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -88,9 +102,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
   Widget _buildButtonIcon() {
     if (state == AppState.free)
       return Icon(Icons.add);
-    else if (state == AppState.picked)
-      return Icon(Icons.crop);
-    else if (state == AppState.split)
+    else if (state == AppState.cropped)
       return Icon(Icons.clear);
     else
       return Container();
@@ -105,6 +117,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       print("Storage permission granted");
     } else if (storageStatus == PermissionStatus.denied) {
       print("Storage permission denied");
+      showToast("Storage Permission is required");
     } else if (storageStatus == PermissionStatus.permanentlyDenied) {
       showToast("Storage Permission is required");
       print("Storage permission permanently denied");
@@ -117,8 +130,10 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     bool isCameraOn = serviceStatus == ServiceStatus.enabled;
     final status = await Permission.camera.request();
     if (status == PermissionStatus.granted) {
+      imageOption(context);
       print("permission granted");
     } else if (status == PermissionStatus.denied) {
+      showToast("Camera Permission is required");
       print("permission denied");
     } else if (status == PermissionStatus.permanentlyDenied) {
       showToast("Camera Permission is required");
@@ -128,14 +143,22 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
   }
 
   /// pick image from camera
-  Future<Null> _pickImage() async {
+  Future<Null> _pickCameraImage() async {
     final pickedImage =
         await ImagePicker().getImage(source: ImageSource.camera);
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
-      setState(() {
-        state = AppState.picked;
-      });
+      _cropImage();
+    }
+  }
+
+  Future<Null> _pickGalleryImage() async {
+    final pickedImage =
+        await ImagePicker().getImage(source: ImageSource.gallery);
+    imageFile = pickedImage != null ? File(pickedImage.path) : null;
+    if (imageFile != null) {
+      // CircularProgressIndicator();
+      _cropImage();
     }
   }
 
@@ -148,14 +171,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                 CropAspectRatioPreset.square,
               ]
             : [
-                // CropAspectRatioPreset.original,
                 CropAspectRatioPreset.square,
-                // CropAspectRatioPreset.ratio3x2,
-                // CropAspectRatioPreset.ratio4x3,
-                // CropAspectRatioPreset.ratio5x3,
-                // CropAspectRatioPreset.ratio5x4,
-                // CropAspectRatioPreset.ratio7x5,
-                // CropAspectRatioPreset.ratio16x9
               ],
         androidUiSettings: AndroidUiSettings(
             toolbarTitle: 'Cropper',
@@ -194,10 +210,10 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     for (var img in parts) {
       output.add(GestureDetector(
           onTap: () {
-            shareImage();
             savingFile(
               img,
             );
+            shareImage();
           },
           child: Image.memory(imglib.encodeJpg(img))));
     }
@@ -209,7 +225,8 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
   ///Saving file locally
   Future<void> savingFile(imglib.Image img) async {
     var imagePath = imglib.encodeJpg(img);
-    final external = (await getApplicationDocumentsDirectory()).path + '/${TimeOfDay.now().toString()}.png';
+    final external = (await getApplicationDocumentsDirectory()).path +
+        '/${TimeOfDay.now().toString()}.png';
     try {
       final file = File(external);
       filepath = await file.writeAsBytes(imagePath);
