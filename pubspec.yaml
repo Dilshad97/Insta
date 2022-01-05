@@ -33,6 +33,8 @@ dependencies:
   image_cropper:
   share:
   path_provider:
+  permission_handler:
+  fluttertoast:
 
 dev_dependencies:
   flutter_test:
