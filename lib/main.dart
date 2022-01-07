@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:imagecrop/check.dart';
 import 'package:imagecrop/image_crop.dart';
+import 'package:imagecrop/home_page.dart';
+
+import 'chek_Croper.dart';
 
 void main() => runApp(MyApp());
 
@@ -11,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: ImageCropingExample(),
+      home: ConfigScreen(),
     );
   }
 }

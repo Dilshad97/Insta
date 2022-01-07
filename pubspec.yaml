@@ -35,6 +35,8 @@ dependencies:
   path_provider:
   permission_handler:
   fluttertoast:
+  shimmer:
+  cropperx:
 
 dev_dependencies:
   flutter_test:

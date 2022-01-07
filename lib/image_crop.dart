@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import 'dart:io';
@@ -8,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ImageCropingExample extends StatefulWidget {
   final String title;
@@ -18,17 +20,18 @@ class ImageCropingExample extends StatefulWidget {
   _ImageCropingExampleState createState() => _ImageCropingExampleState();
 }
 
-enum AppState { free, picked, croping, cropped, split }
+enum AppState { free, picked, cropped,aspectRatio  }
 
 class _ImageCropingExampleState extends State<ImageCropingExample> {
   AppState state;
   File imageFile;
+  File filepath;
 
   @override
   void initState() {
     super.initState();
     state = AppState.free;
-    getStorgePermission();
+    reqCameraPermision();
   }
 
   @override
@@ -37,38 +40,87 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       appBar: AppBar(),
       body: Center(
           child: imageFile != null
-              ? Container(
-                  height: MediaQuery.of(context).size.height / 1.8,
-                  padding: EdgeInsets.all(10),
-                  child: GridView.count(
-                    // childAspectRatio:
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 1.5,
-                    mainAxisSpacing: 1.5,
-                    children: splitImage(imageFile.readAsBytesSync()),
-                  ),
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: MediaQuery.of(context).size.height / 1.8,
+                      padding: EdgeInsets.all(10),
+                      child: FutureBuilder(
+                        future: gridImage(),
+                        builder: (
+                          context,
+                          snapshot,
+                        ) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.none) {
+                            return CircularProgressIndicator();
+                          } else if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            return GridView.count(
+                              // childAspectRatio:
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 1.5,
+                              mainAxisSpacing: 1.5,
+                              children: splitImage3X3(imageFile.readAsBytesSync()),
+                            );
+                          }
+                          return Center(
+                            child: Text(
+                              "Loading...",
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(7)),
+                      width: 70,
+                      height: 30,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.save,
+                            color: Colors.white,
+                          ),
+                          Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          )
+                        ],
+                      ),
+                    )
+                  ],
                 )
-              : Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  padding: EdgeInsets.all(10),
-                  color: Colors.grey.shade400,
-                  child: Center(child: Text("Add Image by Clicking Add Icon ")),
-                )),
+              : Container()),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepOrange,
         onPressed: () {
           if (state == AppState.free)
             reqCameraPermision();
-          else if (state == AppState.cropped) _clearImage();
+          else if (state == AppState.cropped){
+            _clearImage();
+            Navigator.pop(context);
+          }
         },
         child: _buildButtonIcon(),
       ),
     );
   }
 
-  Future<dynamic> imageOption(BuildContext context) {
-    return showModalBottomSheet(
+
+  /// Future Grid show
+  gridImage() async {
+    // await splitImage(imageFile.readAsBytesSync());
+  }
+
+///Bottom sheet Image Option
+  Future<dynamic> imageOption(BuildContext context) async {
+    var store = await showModalBottomSheet(
       context: context,
       builder: (context) {
         return Padding(
@@ -80,7 +132,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                 trailing: Icon(Icons.photo_album),
                 onTap: () {
                   _pickGalleryImage();
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 },
               ),
               ListTile(
@@ -88,7 +140,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                 trailing: Icon(Icons.photo_camera),
                 onTap: () {
                   _pickCameraImage();
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 },
               ),
             ],
@@ -96,6 +148,9 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
         );
       },
     );
+    if (store == null) {
+      Navigator.pop(context);
+    }
   }
 
   ///FAB Button Icon
@@ -106,22 +161,6 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       return Icon(Icons.clear);
     else
       return Container();
-  }
-
-  ///Storage Permission
-  Future<void> getStorgePermission() async {
-    final serviceStatus = await Permission.storage.isGranted;
-    bool isStorage = serviceStatus == ServiceStatus.enabled;
-    final storageStatus = await Permission.storage.request();
-    if (storageStatus == PermissionStatus.granted) {
-      print("Storage permission granted");
-    } else if (storageStatus == PermissionStatus.denied) {
-      print("Storage permission denied");
-      showToast("Storage Permission is required");
-    } else if (storageStatus == PermissionStatus.permanentlyDenied) {
-      showToast("Storage Permission is required");
-      print("Storage permission permanently denied");
-    }
   }
 
   /// Camera Permission
@@ -150,28 +189,38 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     if (imageFile != null) {
       _cropImage();
     }
+    if (imageFile == null) {
+      Navigator.pop(context);
+    }
   }
 
+  /// picking image from Gallery
   Future<Null> _pickGalleryImage() async {
-    final pickedImage =
-        await ImagePicker().getImage(source: ImageSource.gallery);
+    final pickedImage = await ImagePicker().getImage(
+      source: ImageSource.gallery,
+    );
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
       // CircularProgressIndicator();
       _cropImage();
     }
+    if (imageFile == null) {
+      Navigator.pop(context);
+    }
   }
-
+  CropAspectRatioPreset aspect;
   ///crop image in square
   Future<Null> _cropImage() async {
     File croppedFile = await ImageCropper.cropImage(
         sourcePath: imageFile.path,
         aspectRatioPresets: Platform.isAndroid
-            ? [
+            ?  [
                 CropAspectRatioPreset.square,
+          aspect= CropAspectRatioPreset.ratio3x2
               ]
             : [
                 CropAspectRatioPreset.square,
+         CropAspectRatioPreset.ratio3x2
               ],
         androidUiSettings: AndroidUiSettings(
             toolbarTitle: 'Cropper',
@@ -181,6 +230,8 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
             lockAspectRatio: false),
         iosUiSettings: IOSUiSettings(
           title: 'Cropper',
+
+
         ));
     if (croppedFile != null) {
       imageFile = croppedFile;
@@ -189,9 +240,8 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       });
     }
   }
-
   ///Splitting images in 3x3
-  List<Widget> splitImage(List<int> input) {
+  List<Widget> splitImage3X3(List<int> input) {
     imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
     int x = 1, y = 0;
     int width = (image.width / 3).round();
@@ -210,9 +260,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     for (var img in parts) {
       output.add(GestureDetector(
           onTap: () {
-            savingFile(
-              img,
-            );
+            savingFile(img);
             shareImage();
           },
           child: Image.memory(imglib.encodeJpg(img))));
@@ -220,7 +268,33 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     return output;
   }
 
-  File filepath;
+  /// Splitting image in 2x3
+  List<Widget> splitImage2x3(List<int> input) {
+    imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
+    int x = 1, y = 0;
+    int width = (image.width / 3).round();
+    int height = (image.height /2).round();
+
+    List<imglib.Image> parts = <imglib.Image>[];
+    for (int i = 0; i <2; i++) {
+      for (int j = 0; j < 3; j++) {
+        parts.add(imglib.copyCrop(image, x, y, width, height));
+        x += width;
+      }
+      x = 0;
+      y += height;
+    }
+    List<Widget> output = <Widget>[];
+    for (var img in parts) {
+      output.add(GestureDetector(
+          onTap: () {
+            savingFile(img);
+            shareImage();
+          },
+          child: Image.memory(imglib.encodeJpg(img))));
+    }
+    return output;
+  }
 
   ///Saving file locally
   Future<void> savingFile(imglib.Image img) async {
