@@ -47,21 +47,18 @@ class _MyHomePageState extends State<MyHomePage> {
             left: position.dx,
             top: position.dy - height + 20,
             child: Draggable(
-              child: Container(
-                decoration:
-                    BoxDecoration(border: Border.all(color: Colors.red)),
-                width: width,
-                height: MediaQuery.of(context).size.height / 2 / 1.5,
-                // color: Colors.blue,
-                // child: Center(child: Text("Drag",),),
-              ),
-              feedback: Container(
-                  // child: Center(
-                  //   child: Text("Drag", ),),
-                  // color: Colors.blue[300],
-                  // width: width,
-                  // height: height,
-                  ),
+              child: SizedBox(
+                  height: 500,
+                  width: width,
+                  child: AspectRatio(
+                    aspectRatio: 2 / 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        // color: Colors.red ,
+                          border: Border.all(color: Colors.yellow)),
+                    ),
+                  )),
+              feedback: Container(),
               onDraggableCanceled: (Velocity velocity, Offset offset) {
                 setState(() => position = offset);
               },
@@ -76,7 +73,8 @@ class _MyHomePageState extends State<MyHomePage> {
             _pickImage();
           else if (state == AppState.picked)
             // _cropImage();
-            corpImagr();
+            // corpImagr();
+            _clearImage();
           else if (state == AppState.cropped) _clearImage();
         },
         child: _buildButtonIcon(),
@@ -106,31 +104,31 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  corpImagr() {
-    Positioned(
-      left: position.dx,
-      top: position.dy - height + 20,
-      child: Draggable(
-        child: Container(
-          decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-          width: width,
-          height: height,
-          // color: Colors.blue,
-          // child: Center(child: Text("Drag",),),
-        ),
-        feedback: Container(
-            // child: Center(
-            //   child: Text("Drag", ),),
-            // color: Colors.blue[300],
-            // width: width,
-            // height: height,
-            ),
-        onDraggableCanceled: (Velocity velocity, Offset offset) {
-          setState(() => position = offset);
-        },
-      ),
-    );
-  }
+  // corpImagr() {
+  //   Positioned(
+  //     left: position.dx,
+  //     top: position.dy - height + 20,
+  //     child: Draggable(
+  //       child: Container(
+  //         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+  //         width: width,
+  //         height: height,
+  //         // color: Colors.blue,
+  //         // child: Center(child: Text("Drag",),),
+  //       ),
+  //       feedback: Container(
+  //           // child: Center(
+  //           //   child: Text("Drag", ),),
+  //           // color: Colors.blue[300],
+  //           // width: width,
+  //           // height: height,
+  //           ),
+  //       onDraggableCanceled: (Velocity velocity, Offset offset) {
+  //         setState(() => position = offset);
+  //       },
+  //     ),
+  //   );
+  // }
 
   Future<Null> _cropImage() async {
     File croppedFile = await ImageCropper.cropImage(
