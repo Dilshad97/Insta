@@ -35,9 +35,9 @@ dependencies:
   path_provider:
   permission_handler:
   fluttertoast:
-  shimmer:
-  cropperx:
-
+  dio:
+  random_color:
+  draggable_widget:
 dev_dependencies:
   flutter_test:
     sdk: flutter

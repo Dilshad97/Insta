@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
-import 'package:shimmer/shimmer.dart';
 
 class ImageCropingExample extends StatefulWidget {
   final String title;
@@ -20,7 +19,7 @@ class ImageCropingExample extends StatefulWidget {
   _ImageCropingExampleState createState() => _ImageCropingExampleState();
 }
 
-enum AppState { free, picked, cropped,aspectRatio  }
+enum AppState { free, picked, cropped, aspectRatio }
 
 class _ImageCropingExampleState extends State<ImageCropingExample> {
   AppState state;
@@ -57,12 +56,17 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                             return CircularProgressIndicator();
                           } else if (snapshot.connectionState ==
                               ConnectionState.done) {
-                            return GridView.count(
-                              // childAspectRatio:
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 1.5,
-                              mainAxisSpacing: 1.5,
-                              children: splitImage3X3(imageFile.readAsBytesSync()),
+                            return Column(
+                              children: [
+                                GridView.count(
+                                  shrinkWrap: true,
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 1.5,
+                                  mainAxisSpacing: 1.5,
+                                //   children: splitImage3X3(
+                                //       imageFile.readAsBytesSync()),
+                                ),
+                              ],
                             );
                           }
                           return Center(
@@ -102,7 +106,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
         onPressed: () {
           if (state == AppState.free)
             reqCameraPermision();
-          else if (state == AppState.cropped){
+          else if (state == AppState.cropped) {
             _clearImage();
             Navigator.pop(context);
           }
@@ -112,13 +116,12 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     );
   }
 
-
   /// Future Grid show
   gridImage() async {
     // await splitImage(imageFile.readAsBytesSync());
   }
 
-///Bottom sheet Image Option
+  ///Bottom sheet Image Option
   Future<dynamic> imageOption(BuildContext context) async {
     var store = await showModalBottomSheet(
       context: context,
@@ -187,7 +190,8 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
         await ImagePicker().getImage(source: ImageSource.camera);
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
-      _cropImage();
+      // _cropImage();
+      customCropper();
     }
     if (imageFile == null) {
       Navigator.pop(context);
@@ -202,36 +206,43 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
       // CircularProgressIndicator();
-      _cropImage();
+      // _cropImage();
+      customCropper();
     }
     if (imageFile == null) {
       Navigator.pop(context);
     }
   }
-  CropAspectRatioPreset aspect;
+
+
+
+  void  customCropper(){
+
+    Container(
+         height: 200,
+        width: 500,
+        child: Image.file(imageFile));
+
+
+  }
+
+
   ///crop image in square
   Future<Null> _cropImage() async {
     File croppedFile = await ImageCropper.cropImage(
         sourcePath: imageFile.path,
         aspectRatioPresets: Platform.isAndroid
-            ?  [
-                CropAspectRatioPreset.square,
-          aspect= CropAspectRatioPreset.ratio3x2
-              ]
-            : [
-                CropAspectRatioPreset.square,
-         CropAspectRatioPreset.ratio3x2
-              ],
+            ? [CropAspectRatioPreset.square, CropAspectRatioPreset.ratio3x2]
+            : [CropAspectRatioPreset.square, CropAspectRatioPreset.ratio3x2],
+        cropStyle: CropStyle.rectangle,
         androidUiSettings: AndroidUiSettings(
-            toolbarTitle: 'Cropper',
-            toolbarColor: Colors.deepOrange,
+            toolbarTitle: 'Crop Your Image to Make Grid',
+            toolbarColor: Colors.accents[1].shade100,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false),
+            lockAspectRatio: true),
         iosUiSettings: IOSUiSettings(
           title: 'Cropper',
-
-
         ));
     if (croppedFile != null) {
       imageFile = croppedFile;
@@ -240,61 +251,62 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
       });
     }
   }
+
   ///Splitting images in 3x3
-  List<Widget> splitImage3X3(List<int> input) {
-    imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
-    int x = 1, y = 0;
-    int width = (image.width / 3).round();
-    int height = (image.height / 3).round();
-
-    List<imglib.Image> parts = <imglib.Image>[];
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        parts.add(imglib.copyCrop(image, x, y, width, height));
-        x += width;
-      }
-      x = 0;
-      y += height;
-    }
-    List<Widget> output = <Widget>[];
-    for (var img in parts) {
-      output.add(GestureDetector(
-          onTap: () {
-            savingFile(img);
-            shareImage();
-          },
-          child: Image.memory(imglib.encodeJpg(img))));
-    }
-    return output;
-  }
-
-  /// Splitting image in 2x3
-  List<Widget> splitImage2x3(List<int> input) {
-    imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
-    int x = 1, y = 0;
-    int width = (image.width / 3).round();
-    int height = (image.height /2).round();
-
-    List<imglib.Image> parts = <imglib.Image>[];
-    for (int i = 0; i <2; i++) {
-      for (int j = 0; j < 3; j++) {
-        parts.add(imglib.copyCrop(image, x, y, width, height));
-        x += width;
-      }
-      x = 0;
-      y += height;
-    }
-    List<Widget> output = <Widget>[];
-    for (var img in parts) {
-      output.add(GestureDetector(
-          onTap: () {
-            savingFile(img);
-            shareImage();
-          },
-          child: Image.memory(imglib.encodeJpg(img))));
-    }
-    return output;
-  }
+  // List<Widget> splitImage3X3(List<int> input) {
+  //   imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
+  //   int x = 1, y = 0;
+  //   int width = (image.width / 3).round();
+  //   int height = (image.height / 3).round();
+  //
+  //   List<imglib.Image> parts = <imglib.Image>[];
+  //   for (int i = 0; i < 3; i++) {
+  //     for (int j = 0; j < 3; j++) {
+  //       parts.add(imglib.copyCrop(image, x, y, width, height));
+  //       x += width;
+  //     }
+  //     x = 0;
+  //     y += height;
+  //   }
+  //   List<Widget> output = <Widget>[];
+  //   for (var img in parts) {
+  //     output.add(GestureDetector(
+  //         onTap: () {
+  //           savingFile(img);
+  //           shareImage();
+  //         },
+  //         child: Image.memory(imglib.encodeJpg(img))));
+  //   }
+  //   return output;
+  // }
+  //
+  // /// Splitting image in 2x3
+  // List<Widget> splitImage2x3(List<int> input) {
+  //   imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
+  //   int x = 1, y = 0;
+  //   int width = (image.width / 3).round();
+  //   int height = (image.height / 2).round();
+  //
+  //   List<imglib.Image> parts = <imglib.Image>[];
+  //   for (int i = 0; i < 2; i++) {
+  //     for (int j = 0; j < 3; j++) {
+  //       parts.add(imglib.copyCrop(image, x, y, width, height));
+  //       x += width;
+  //     }
+  //     x = 0;
+  //     y += height;
+  //   }
+  //   List<Widget> output = <Widget>[];
+  //   for (var img in parts) {
+  //     output.add(GestureDetector(
+  //         onTap: () {
+  //           savingFile(img);
+  //           shareImage();
+  //         },
+  //         child: Image.memory(imglib.encodeJpg(img))));
+  //   }
+  //   return output;
+  // }
 
   ///Saving file locally
   Future<void> savingFile(imglib.Image img) async {

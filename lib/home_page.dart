@@ -17,6 +17,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     getStorgePermission();
   }
+
   @override
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height / 8;
@@ -24,6 +25,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.accents[1].shade100,
       appBar: AppBar(
+        elevation: 3,
         backgroundColor: Colors.accents[1].shade100,
         leading: Icon(Icons.share),
       ),
@@ -33,16 +35,26 @@ class _HomePageState extends State<HomePage> {
           children: [
             InkWell(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ImageCropingExample(),));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImageCropingExample(),
+                      ));
                 },
-                child: gridRow(height, width, "Grid Maker",'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSiTKwz1crfnN02bdanB0LnOiYKPS08k6yah01PfnTwP5OkhyzbH93D456tCmWnWUX1AtQ&usqp=CAU')),
-            InkWell(child: gridRow(height, width,'Profile Viewer','https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_xap6GbjH3v7-lDkmv_bOAsrryGTIW25blQ&usqp=CAU')),
-            InkWell(child: gridRow(height, width, "Download Reels",'https://icon-library.com/images/crop-icon/crop-icon-4.jpg'))
+                child: gridRow(height, width, "Grid Maker",
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSiTKwz1crfnN02bdanB0LnOiYKPS08k6yah01PfnTwP5OkhyzbH93D456tCmWnWUX1AtQ&usqp=CAU')),
+            InkWell(
+                child: gridRow(height, width, 'Profile Viewer',
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_xap6GbjH3v7-lDkmv_bOAsrryGTIW25blQ&usqp=CAU')),
+            InkWell(
+                child: gridRow(height, width, "Download Reels",
+                    'https://icon-library.com/images/crop-icon/crop-icon-4.jpg'))
           ],
         ),
       ),
     );
   }
+
   ///Storage Permission
   Future<void> getStorgePermission() async {
     final serviceStatus = await Permission.storage.isGranted;
@@ -58,7 +70,8 @@ class _HomePageState extends State<HomePage> {
       print("Storage permission permanently denied");
     }
   }
-  Widget gridRow(double height, double width, String text,final img) {
+
+  Widget gridRow(double height, double width, String text, final img) {
     return Container(
       height: height,
       width: width,
@@ -66,19 +79,14 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
-            colors: [
-              Colors.blue,
-              Colors.red,
-            ],
+            colors: [Colors.blue, Colors.red, Colors.grey, Colors.blue],
           ),
           borderRadius: BorderRadius.circular(10)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.network(
-            // image,
             img,
-            // 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSiTKwz1crfnN02bdanB0LnOiYKPS08k6yah01PfnTwP5OkhyzbH93D456tCmWnWUX1AtQ&usqp=CAU',
             height: 50,
             width: 80,
           ),
@@ -105,5 +113,4 @@ class _HomePageState extends State<HomePage> {
       textColor: Colors.white,
     );
   }
-
 }
