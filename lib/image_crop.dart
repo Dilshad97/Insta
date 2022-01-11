@@ -59,12 +59,12 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
                             return Column(
                               children: [
                                 GridView.count(
-                                  shrinkWrap: true,
+                                  shrinkWrap:  true,
                                   crossAxisCount: 3,
                                   crossAxisSpacing: 1.5,
                                   mainAxisSpacing: 1.5,
-                                //   children: splitImage3X3(
-                                //       imageFile.readAsBytesSync()),
+                                  children: splitImage3X3(
+                                      imageFile.readAsBytesSync()),
                                 ),
                               ],
                             );
@@ -190,7 +190,7 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
         await ImagePicker().getImage(source: ImageSource.camera);
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
-      // _cropImage();
+      _cropImage();
       customCropper();
     }
     if (imageFile == null) {
@@ -205,9 +205,9 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
     );
     imageFile = pickedImage != null ? File(pickedImage.path) : null;
     if (imageFile != null) {
-      // CircularProgressIndicator();
-      // _cropImage();
-      customCropper();
+      CircularProgressIndicator();
+      _cropImage();
+      // customCropper();
     }
     if (imageFile == null) {
       Navigator.pop(context);
@@ -253,60 +253,60 @@ class _ImageCropingExampleState extends State<ImageCropingExample> {
   }
 
   ///Splitting images in 3x3
-  // List<Widget> splitImage3X3(List<int> input) {
-  //   imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
-  //   int x = 1, y = 0;
-  //   int width = (image.width / 3).round();
-  //   int height = (image.height / 3).round();
-  //
-  //   List<imglib.Image> parts = <imglib.Image>[];
-  //   for (int i = 0; i < 3; i++) {
-  //     for (int j = 0; j < 3; j++) {
-  //       parts.add(imglib.copyCrop(image, x, y, width, height));
-  //       x += width;
-  //     }
-  //     x = 0;
-  //     y += height;
-  //   }
-  //   List<Widget> output = <Widget>[];
-  //   for (var img in parts) {
-  //     output.add(GestureDetector(
-  //         onTap: () {
-  //           savingFile(img);
-  //           shareImage();
-  //         },
-  //         child: Image.memory(imglib.encodeJpg(img))));
-  //   }
-  //   return output;
-  // }
-  //
-  // /// Splitting image in 2x3
-  // List<Widget> splitImage2x3(List<int> input) {
-  //   imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
-  //   int x = 1, y = 0;
-  //   int width = (image.width / 3).round();
-  //   int height = (image.height / 2).round();
-  //
-  //   List<imglib.Image> parts = <imglib.Image>[];
-  //   for (int i = 0; i < 2; i++) {
-  //     for (int j = 0; j < 3; j++) {
-  //       parts.add(imglib.copyCrop(image, x, y, width, height));
-  //       x += width;
-  //     }
-  //     x = 0;
-  //     y += height;
-  //   }
-  //   List<Widget> output = <Widget>[];
-  //   for (var img in parts) {
-  //     output.add(GestureDetector(
-  //         onTap: () {
-  //           savingFile(img);
-  //           shareImage();
-  //         },
-  //         child: Image.memory(imglib.encodeJpg(img))));
-  //   }
-  //   return output;
-  // }
+  List<Widget> splitImage3X3(List<int> input) {
+    imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
+    int x = 1, y = 0;
+    int width = (image.width / 3).round();
+    int height = (image.height / 3).round();
+
+    List<imglib.Image> parts = <imglib.Image>[];
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        parts.add(imglib.copyCrop(image, x, y, width, height));
+        x += width;
+      }
+      x = 0;
+      y += height;
+    }
+    List<Widget> output = <Widget>[];
+    for (var img in parts) {
+      output.add(GestureDetector(
+          onTap: () {
+            savingFile(img);
+            shareImage();
+          },
+          child: Image.memory(imglib.encodeJpg(img))));
+    }
+    return output;
+  }
+
+  /// Splitting image in 2x3
+  List<Widget> splitImage2x3(List<int> input) {
+    imglib.Image image = imglib.decodeImage(imageFile.readAsBytesSync());
+    int x = 1, y = 0;
+    int width = (image.width / 3).round();
+    int height = (image.height / 2).round();
+
+    List<imglib.Image> parts = <imglib.Image>[];
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 3; j++) {
+        parts.add(imglib.copyCrop(image, x, y, width, height));
+        x += width;
+      }
+      x = 0;
+      y += height;
+    }
+    List<Widget> output = <Widget>[];
+    for (var img in parts) {
+      output.add(GestureDetector(
+          onTap: () {
+            savingFile(img);
+            shareImage();
+          },
+          child: Image.memory(imglib.encodeJpg(img))));
+    }
+    return output;
+  }
 
   ///Saving file locally
   Future<void> savingFile(imglib.Image img) async {
